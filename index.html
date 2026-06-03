@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الشيخ محمد صديق المنشاوي - المصحف المرتل</title>
+    <title>الشيخ محمد صديق المنشاوي - الختمة المرتلة الثانية</title>
     <!-- استدعاء خط القاهرة -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -49,37 +49,50 @@
         .container {
             width: 100%;
             max-width: 660px; /* مدمج ومريح للعين */
-            padding: 25px 16px;
+            padding: 15px 16px 25px 16px; 
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px; /* مسافات تماسك واحترافية */
         }
 
         /* الترويسة الرئيسية */
         header {
             text-align: center;
-            padding: 20px 10px;
+            padding: 20px 10px 10px 10px; /* زيادة المساحة من الأعلى لتعطي توازناً بصرياً */
             user-select: none;
         }
         
-        .header-icon {
-            width: 40px; height: 40px;
-            background: rgba(212, 175, 55, 0.05);
-            color: var(--accent-gold);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 10px auto;
-            border: 1px solid rgba(212, 175, 55, 0.1);
+        .header-image-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 12px; /* زيادة طفيفة للهامش لمنع ملامسة النص */
+        }
+
+        /* تنسيق الصورة المحدث بزيادة طفيفة في الارتفاع من الأسفل مع الحفاظ على الضغط */
+        .header-img {
+            height: 110px; /* زيادة الارتفاع قليلاً جداً من الأسفل */
+            width: 135px; /* الحفاظ على العرض المضغوط */
+            object-fit: cover; 
+            object-position: center 20%; /* تعديل طفيف للموقع ليكون متناسقاً بين الرأس والجسد */
+            border-radius: 12px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease;
+        }
+        
+        .header-img:hover {
+            transform: scale(1.03);
         }
 
         header h1 { 
-            font-size: 1.45rem; 
+            font-size: 1.35rem;
             font-weight: 300;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             color: #fff;
+            margin-bottom: 2px;
         }
         header h1 strong { font-weight: 700; color: var(--accent-gold); }
-        header p { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; margin-top: 4px; }
+        header p { font-size: 0.76rem; color: var(--text-muted); font-weight: 400; }
 
         /* أشرطة التحكم والبحث */
         .controls-wrapper {
@@ -165,6 +178,7 @@
             justify-content: space-between;
             padding: 11px 16px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.015);
+            border-right: 2.5px solid transparent; /* تهيئة الحافة اليمنى لتأثير تفاعلي مبتكر */
             transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
             animation: fadeInRow 0.3s ease forwards;
             opacity: 0;
@@ -173,12 +187,27 @@
 
         @keyframes fadeInRow { to { opacity: 1; transform: translateY(0); } }
         .surah-row:last-child { border-bottom: none; }
-        .surah-row:hover { background: rgba(255, 255, 255, 0.01); }
-        .surah-row.active-row { background: var(--glass-active); }
+        
+        .surah-row:hover { 
+            background: rgba(255, 255, 255, 0.015); 
+            border-right-color: rgba(212, 175, 55, 0.15); /* إضاءة ذهبية رقيقة جداً عند المرور */
+        }
+        
+        /* تأثير السورة النشطة المبتكر */
+        .surah-row.active-row { 
+            background: var(--glass-active); 
+            border-right-color: var(--accent-gold); /* خط عمودي مذهب ثابت بجانب السورة الجاري تشغيلها */
+        }
 
         .surah-info { display: flex; align-items: center; gap: 12px; }
         .surah-number { font-size: 0.78rem; font-weight: 400; color: var(--text-muted); min-width: 28px; text-align: right; }
-        .surah-name { font-size: 0.96rem; font-weight: 600; letter-spacing: 0.2px; }
+        
+        /* تقليص حجم خط أسماء السور لمظهر مدمج وأكثر رُقياً */
+        .surah-name { 
+            font-size: 0.88rem; /* تم خفضه بنصف درجة ليكون أكثر تناسقاً وتفادياً للضخامة */
+            font-weight: 600; 
+            letter-spacing: 0.1px; 
+        }
 
         .actions { display: flex; gap: 6px; }
 
@@ -291,14 +320,13 @@
 <body>
 
     <div class="container">
+        <!-- قسم العنوان المحدث بضبط مركز ومحيط الصورة الفنية وبنصوص جديدة مخصصة للختمة المفقودة -->
         <header>
-            <div class="header-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                </svg>
+            <div class="header-image-container">
+                <img src="https://f.top4top.io/p_38068cvpd0.jpg" alt="الشيخ محمد صديق المنشاوي" class="header-img">
             </div>
-            <h1>المنشاوي <strong>المرتل</strong></h1>
-            <p>تلاوة مباركة خاضعة للتخصيص من لوحة التحكم</p>
+            <h1>الشيخ محمد صديق <strong>المنشاوي</strong></h1>
+            <p>الختمة المرتلة الثانية ( الختمة المفقودة )</p>
         </header>
 
         <div class="controls-wrapper">
@@ -556,6 +584,7 @@
             }
         }
 
+        // إيقاف مؤقت / تشغيل
         function togglePlayPause() {
             if (!playingSurahId && surahs.length > 0) {
                 selectAndPlay(surahs[0].id);
@@ -658,8 +687,8 @@
         };
 
         function seekAudio(event) {
-            const rect = document.getElementById('progress-container').getBoundingClientRect();
-            const clickPosition = (event.clientX - rect.left) / rect.width;
+            const MathFraction = document.getElementById('progress-container').getBoundingClientRect();
+            const clickPosition = (event.clientX - MathFraction.left) / MathFraction.width;
             audioInstance.currentTime = clickPosition * audioInstance.duration;
         }
 
