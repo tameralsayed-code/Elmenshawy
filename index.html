@@ -44,6 +44,12 @@
             display: flex;
             justify-content: center;
             padding-bottom: 110px; /* مسافة متناسقة للمشغل العائم */
+            
+            /* منع تحديد أو تظليل أو تعليم النصوص تماماً عند الضغط للنسخ */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
 
         .container {
@@ -183,6 +189,7 @@
             animation: fadeInRow 0.3s ease forwards;
             opacity: 0;
             transform: translateY(5px);
+            cursor: pointer; /* جعل كامل إطار السورة يشير للضغط بالماوس وتفعيل التشغيل المباشر عند النقر */
         }
 
         @keyframes fadeInRow { to { opacity: 1; transform: translateY(0); } }
@@ -211,7 +218,7 @@
 
         .actions { display: flex; gap: 6px; }
 
-        /* أزرار الإجراءات */
+        /* أزرار الإجراءات بجانب السور */
         .icon-btn {
             background: transparent;
             border: 1px solid transparent;
@@ -237,7 +244,7 @@
         }
         .icon-btn svg { width: 15px; height: 15px; }
 
-        /* مشغل صوتي عائم */
+        /* مشغل صوتي عائم نحيف للغاية واحترافي بنمط السطر الموحد */
         .floating-player {
             position: fixed;
             bottom: 20px;
@@ -245,7 +252,7 @@
             transform: translateX(-50%) translateY(140px);
             width: calc(100% - 32px);
             max-width: 628px;
-            background: rgba(3, 20, 16, 0.92);
+            background: rgba(3, 20, 16, 0.94);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(212, 175, 55, 0.12);
@@ -253,34 +260,84 @@
             box-shadow: 0 12px 35px rgba(0,0,0,0.4);
             z-index: 999;
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            padding: 10px 16px;
+            padding: 8px 16px 12px 16px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }
 
         .floating-player.active { transform: translateX(-50%) translateY(0); }
 
+        /* تطوير شريط التقدم ليكون تفاعلياً ومناسباً للسحب */
         .player-seekbar-container {
             position: absolute;
             top: 0; left: 0; right: 0;
-            height: 2.5px;
+            height: 4px; /* تحسين الارتفاع الأولي */
             background: rgba(255,255,255,0.06);
             cursor: pointer;
             border-top-left-radius: 16px;
             border-top-right-radius: 16px;
-            overflow: hidden;
+            transition: height 0.2s ease, top 0.2s ease;
+            display: flex;
+            align-items: center;
+            direction: ltr; /* فرض الاتجاه من اليسار لليمين ليبدأ الشريط من الجهة المقابلة */
+        }
+
+        /* يتسع شريط السحب عند تمرير الفأرة أو لمسه */
+        .player-seekbar-container:hover,
+        .player-seekbar-container.dragging {
+            height: 8px;
         }
 
         .player-seekbar-fill {
             height: 100%; width: 0%;
             background: linear-gradient(90deg, var(--accent-gold), #fff);
+            position: relative;
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
             transition: width 0.1s linear;
+            box-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
         }
 
-        .player-row-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
-        .player-info { display: flex; align-items: center; gap: 8px; max-width: 50%; }
-        .player-visualizer { display: flex; align-items: flex-end; gap: 2.5px; height: 12px; width: 14px; }
+        /* مقبض سحب احترافي (Thumb) صغير الحجم ومستقر بشكل دائم من البداية */
+        .player-seekbar-thumb {
+            position: absolute;
+            left: 100%; /* الارتكاز التام على نهاية خط التعبئة بدقة */
+            top: 50%;
+            transform: translate(-50%, -50%) scale(1); /* جعل الرأس مرئية ومفعلة دائماً من البداية */
+            width: 10px; height: 10px; /* رأس دائرية صغيرة */
+            background: #fff;
+            border: 2px solid var(--accent-gold);
+            border-radius: 50%;
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            pointer-events: none;
+        }
+
+        /* تفاعل الرأس بالتمدد التلقائي قليلاً عند اللمس والسحب لزيادة سهولة التحكم */
+        .player-seekbar-container:hover .player-seekbar-thumb,
+        .player-seekbar-container.dragging .player-seekbar-thumb {
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+
+        /* الهيكل المضغوط والموحد للمشغل أحادي السطر */
+        .player-compact-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0; /* يسمح باقتصاص النص الفائض */
+        }
+
+        .player-visualizer { display: flex; align-items: flex-end; gap: 2.5px; height: 12px; width: 14px; flex-shrink: 0; }
         .player-visualizer span { width: 2px; background: var(--accent-gold); animation: bounce 0.8s infinite ease-in-out alternate; border-radius: 1px; }
         .player-visualizer.paused span { animation-play-state: paused; height: 2px !important; }
         .player-visualizer span:nth-child(1) { height: 10px; animation-delay: 0.1s; }
@@ -289,22 +346,54 @@
 
         @keyframes bounce { 10% { height: 2px; } 100% { height: 100%; } }
 
-        .player-title { font-size: 0.84rem; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
-        .player-controls { display: flex; align-items: center; gap: 5px; }
-        .player-btn { background: transparent; border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .player-title { 
+            font-size: 0.82rem; 
+            font-weight: 400; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            color: var(--text-main); 
+        }
+
+        /* عرض توقيت مدمج */
+        .player-time-display {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            user-select: none;
+            white-space: nowrap;
+        }
+        
+        /* تجميع الأزرار المطلوبة فقط (التشغيل وكتم الصوت) */
+        .player-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .player-btn { 
+            background: transparent; 
+            border: none; 
+            color: var(--text-muted); 
+            width: 32px; height: 32px; 
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; transition: 0.2s; 
+        }
         .player-btn:hover { color: var(--text-main); }
-        .player-btn.play-toggle-btn { background: rgba(212, 175, 55, 0.1); color: var(--accent-gold); border: 1px solid rgba(212, 175, 55, 0.15); }
+        
+        .player-btn.play-toggle-btn { 
+            background: rgba(212, 175, 55, 0.1); 
+            color: var(--accent-gold); 
+            border: 1px solid rgba(212, 175, 55, 0.15); 
+            width: 34px; height: 34px;
+        }
         .player-btn.play-toggle-btn:hover { background: rgba(212, 175, 55, 0.18); }
-        .player-btn.active-opt { color: var(--accent-gold); }
         .player-btn svg { width: 14px; height: 14px; }
         .player-btn.play-toggle-btn svg { width: 15px; height: 15px; }
-
-        .player-row-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .player-time { font-size: 0.74rem; font-weight: 400; color: var(--text-muted); }
-        .player-left-group { display: flex; align-items: center; gap: 8px; }
-        .player-volume-container { display: flex; align-items: center; gap: 4px; }
-        .volume-slider { width: 45px; height: 3px; accent-color: var(--accent-gold); cursor: pointer; opacity: 0.5; transition: opacity 0.2s; }
-        .volume-slider:hover { opacity: 1; }
 
         .toast-notification {
             position: fixed; top: 15px; left: 50%; transform: translateX(-50%) translateY(-100px);
@@ -349,57 +438,44 @@
         <div class="surah-list-container" id="main-surah-list"></div>
     </div>
 
-    <!-- المشغل العائم -->
+    <!-- المشغل العائم النحيف والاحترافي المدمج (سطر واحد مذهب) -->
     <div class="floating-player" id="global-player">
-        <div class="player-seekbar-container" id="progress-container" onclick="seekAudio(event)">
-            <div class="player-seekbar-fill" id="progress-bar-fill"></div>
+        <!-- شريط التقدم التفاعلي الداعم للسحب والمزامنة البصرية -->
+        <div class="player-seekbar-container" id="progress-container">
+            <div class="player-seekbar-fill" id="progress-bar-fill">
+                <span class="player-seekbar-thumb"></span>
+            </div>
         </div>
 
-        <div class="player-row-top">
+        <!-- السطر الموحد المدمج للمشغل -->
+        <div class="player-compact-row">
+            <!-- اليسار: متبذب الصوت وعنوان السورة -->
             <div class="player-info">
                 <div class="player-visualizer" id="visualizer">
                     <span></span><span></span><span></span>
                 </div>
                 <div class="player-title" id="player-track-title">جاري تحميل قائمة السور...</div>
             </div>
+
+            <!-- الوسط: توقيت التشغيل المدمج -->
+            <div class="player-time-display">
+                <span id="player-current-time">00:00</span>
+                <span style="opacity: 0.5;">/</span>
+                <span id="player-duration-time">00:00</span>
+            </div>
             
-            <div class="player-controls">
-                <button class="player-btn" id="btn-loop" onclick="toggleLoop()" title="تكرار السورة">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+            <!-- اليمين: زر كتم الصوت وزر التشغيل فقط -->
+            <div class="player-actions">
+                <!-- زر كتم الصوت فقط (تم الاستغناء عن شريط التمرير الجانبي لمظهر نظيف ونحيف) -->
+                <button class="player-btn" onclick="toggleMute()" id="volume-btn" title="كتم / تشغيل الصوت">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                 </button>
-
-                <button class="player-btn" onclick="playPrev()" title="السورة السابقة">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="1.5"></line></svg>
-                </button>
-
-                <button class="player-btn play-toggle-btn" onclick="togglePlayPause()" id="player-play-btn">
+                
+                <!-- زر تشغيل / إيقاف مؤقت -->
+                <button class="player-btn play-toggle-btn" onclick="togglePlayPause()" id="player-play-btn" title="تشغيل / إيقاف">
                     <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                 </button>
-
-                <button class="player-btn" onclick="playNext()" title="السورة التالية">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="1.5"></line></svg>
-                </button>
-
-                <button class="player-btn active-opt" id="btn-autoplay" onclick="toggleAutoplay()" title="التشغيل التلقائي المتتالي">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 10 0 1 1-9 9z"></path><path d="M12 7v5l4 2"></path></svg>
-                </button>
             </div>
-        </div>
-
-        <div class="player-row-bottom">
-            <span class="player-time" id="player-current-time">00:00</span>
-            <div class="player-left-group">
-                <div class="player-volume-container">
-                    <button class="player-btn" style="width:26px; height:26px;" onclick="toggleMute()" id="volume-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                    </button>
-                    <input type="range" class="volume-slider" id="volume-range" min="0" max="1" step="0.05" value="1" oninput="setVolume(this.value)">
-                </div>
-                <button class="player-btn" id="player-download-btn" title="تحميل السورة الحالية">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                </button>
-            </div>
-            <span class="player-time" id="player-duration-time">00:00</span>
         </div>
     </div>
 
@@ -417,9 +493,15 @@
 
         let audioInstance = new Audio();
         let playingSurahId = null;
-        let isAutoplayActive = true;
-        let isLoopActive = false;
         let lastVolume = 1;
+
+        // متغيرات لمراقبة عملية سحب ومزامنة شريط التشغيل
+        let isDraggingProgress = false;
+        let isSeeking = false; // لمنع أي ارتدادات برمجية أثناء طلب الملف الصوتي
+
+        // ربط أحداث القفز الزمني الفعلي لمنع أي قفزات ارتدادية
+        audioInstance.onseeking = () => { isSeeking = true; };
+        audioInstance.onseeked = () => { isSeeking = false; };
 
         // جلب البيانات ديناميكياً من ملف JSON
         async function fetchSurahData() {
@@ -476,6 +558,10 @@
                 row.style.animationDelay = `${delay}s`;
                 row.setAttribute('data-id', surah.id);
                 
+                // تفعيل حدث التشغيل المباشر عند النقر على كامل إطار السورة
+                row.onclick = () => selectAndPlay(surah.id);
+                
+                // تم تمرير حدث منع الانتشار (stopPropagation) للأزرار الجانبية لمنع تداخل تشغيل السورة عند الضغط عليها
                 row.innerHTML = `
                     <div class="surah-info">
                         <span class="surah-number">${String(surah.id).padStart(3, '0')}</span>
@@ -483,10 +569,10 @@
                     </div>
                     <div class="actions">
                         <button class="icon-btn fav-btn ${isFav ? 'is-fav' : ''}" onclick="toggleFav(${surah.id}, event)" title="${isFav ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}">${icons.star}</button>
-                        <button class="icon-btn list-play-btn ${isCurrentPlaying ? 'playing-list-btn' : ''}" onclick="selectAndPlay(${surah.id})" aria-label="تشغيل">
+                        <button class="icon-btn list-play-btn ${isCurrentPlaying ? 'playing-list-btn' : ''}" onclick="event.stopPropagation(); selectAndPlay(${surah.id})" aria-label="تشغيل">
                             ${isCurrentPlaying && !audioInstance.paused ? icons.pause : icons.play}
                         </button>
-                        <button class="icon-btn" onclick="downloadAudio('${surah.url}', 'سورة ${surah.name} - المنشاوي.mp3', this)" aria-label="تحميل مباشر" title="تحميل مباشر">${icons.download}</button>
+                        <button class="icon-btn" onclick="event.stopPropagation(); downloadAudio('${surah.url}', 'سورة ${surah.name} - المنشاوي.mp3', this)" aria-label="تحميل مباشر" title="تحميل مباشر">${icons.download}</button>
                     </div>
                 `;
                 mainList.appendChild(row);
@@ -501,7 +587,7 @@
         }
 
         function toggleFav(id, event) {
-            event.stopPropagation(); 
+            if (event) event.stopPropagation(); 
             if (favorites.includes(id)) {
                 favorites = favorites.filter(favId => favId !== id);
             } else {
@@ -553,11 +639,6 @@
             // تفعيل واجهة التشغيل بالمسار الجديد فوراً دون انتظار استجابة السيرفر
             document.getElementById('global-player').classList.add('active');
             document.getElementById('player-track-title').innerText = `سورة ${selectedSurah.name}`;
-            
-            const playerDownloadBtn = document.getElementById('player-download-btn');
-            playerDownloadBtn.onclick = () => {
-                downloadAudio(selectedSurah.url, `سورة ${selectedSurah.name} - المنشاوي.mp3`, playerDownloadBtn);
-            };
 
             // استخدام تأخير متناهي الصغر (50 ملي ثانية) لتنظيم طابور العمليات البرمجية بالسماح للمتصفح بالانتهاء من مسح المقطع القديم قبل المباشرة بطلب وتحميل المقطع الجديد، مما يجعل الانتقال فورياً وسلساً دون أدنى تأخير
             setTimeout(() => {
@@ -600,35 +681,12 @@
             }
         }
 
-        function playPrev() {
-            if (!playingSurahId || surahs.length === 0) return;
-            const currentIndex = surahs.findIndex(s => s.id === playingSurahId);
-            if (currentIndex > 0) {
-                selectAndPlay(surahs[currentIndex - 1].id);
-            } else {
-                selectAndPlay(surahs[surahs.length - 1].id);
-            }
-        }
-
-        function toggleLoop() {
-            isLoopActive = !isLoopActive;
-            audioInstance.loop = isLoopActive;
-            document.getElementById('btn-loop').classList.toggle('active-opt', isLoopActive);
-        }
-
-        function toggleAutoplay() {
-            isAutoplayActive = !isAutoplayActive;
-            document.getElementById('btn-autoplay').classList.toggle('active-opt', isAutoplayActive);
-        }
-
         function toggleMute() {
             if (audioInstance.volume > 0) {
                 lastVolume = audioInstance.volume;
                 setVolume(0);
-                document.getElementById('volume-range').value = 0;
             } else {
                 setVolume(lastVolume);
-                document.getElementById('volume-range').value = lastVolume;
             }
         }
 
@@ -655,8 +713,9 @@
             renderUI();
         }
 
+        // ربط وتحديث شريط التقدم مع تفادي التحديث التلقائي أثناء قيام المستخدم بالسحب الفعلي أو أثناء عملية البحث الزمني (Seeking)
         audioInstance.ontimeupdate = () => {
-            if (isNaN(audioInstance.duration)) return;
+            if (isNaN(audioInstance.duration) || isDraggingProgress || isSeeking) return;
             const progress = (audioInstance.currentTime / audioInstance.duration) * 100;
             document.getElementById('progress-bar-fill').style.width = `${progress}%`;
             document.getElementById('player-current-time').innerText = formatTime(audioInstance.currentTime);
@@ -666,21 +725,76 @@
             document.getElementById('player-duration-time').innerText = formatTime(audioInstance.duration);
         };
 
+        // الانتقال التلقائي للسورة التالية فور انتهاء السورة الجارية
         audioInstance.onended = () => {
-            if (isLoopActive) {
-                audioInstance.currentTime = 0;
-                audioInstance.play();
-            } else if (isAutoplayActive) {
-                playNext();
-            } else {
-                updatePlayerUI(false);
-            }
+            playNext();
         };
 
-        function seekAudio(event) {
-            const MathFraction = document.getElementById('progress-container').getBoundingClientRect();
-            const clickPosition = (event.clientX - MathFraction.left) / MathFraction.width;
-            audioInstance.currentTime = clickPosition * audioInstance.duration;
+        // تطوير معالج السحب والتقديم المتزامن والاحترافي لشريط التشغيل لمنع أي ارتداد زمني
+        function initProgressDrag() {
+            const container = document.getElementById('progress-container');
+            const fill = document.getElementById('progress-bar-fill');
+            const timeLabel = document.getElementById('player-current-time');
+            let lastPct = 0; // الاحتفاظ بآخر قيمة صحيحة ومؤكدة للنسبة المئوية
+
+            function getPercentage(e) {
+                const rect = container.getBoundingClientRect();
+                let clientX;
+                
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                } else if (e.changedTouches && e.changedTouches.length > 0) {
+                    // لمس الشاشات الذكية عند الإفلات يستعين بـ changedTouches
+                    clientX = e.changedTouches[0].clientX;
+                } else {
+                    clientX = e.clientX;
+                }
+
+                if (clientX === undefined) {
+                    return lastPct;
+                }
+
+                let pct = (clientX - rect.left) / rect.width;
+                pct = Math.max(0, Math.min(1, pct));
+                lastPct = pct; // تحديث النسبة الاحتياطية المضمونة
+                return pct;
+            }
+
+            function onDragStart(e) {
+                isDraggingProgress = true;
+                container.classList.add('dragging');
+                onDrag(e);
+            }
+
+            function onDrag(e) {
+                if (!isDraggingProgress) return;
+                const pct = getPercentage(e);
+                fill.style.width = `${pct * 100}%`;
+                if (!isNaN(audioInstance.duration)) {
+                    timeLabel.innerText = formatTime(pct * audioInstance.duration);
+                }
+            }
+
+            function onDragEnd(e) {
+                if (!isDraggingProgress) return;
+                isDraggingProgress = false;
+                container.classList.remove('dragging');
+                const pct = getPercentage(e);
+                if (!isNaN(audioInstance.duration)) {
+                    // تعيين موضع التشغيل الفعلي بدقة فور الإفلات دون أي ارتداد زمني
+                    audioInstance.currentTime = pct * audioInstance.duration;
+                }
+            }
+
+            // الفأرة (Mouse)
+            container.addEventListener('mousedown', onDragStart);
+            window.addEventListener('mousemove', onDrag);
+            window.addEventListener('mouseup', onDragEnd);
+
+            // اللمس (Touch) للأجهزة المحمولة (تغطي الشاشة بالكامل لثبات السحب التام)
+            container.addEventListener('touchstart', onDragStart);
+            window.addEventListener('touchmove', onDrag);
+            window.addEventListener('touchend', onDragEnd);
         }
 
         function formatTime(seconds) {
@@ -708,8 +822,9 @@
             });
         }
 
-        // بدء تحميل البيانات فور تحميل الصفحة
+        // بدء تحميل البيانات وربط معالجات الأحداث فور التحميل المبدئي
         fetchSurahData();
+        initProgressDrag();
     </script>
 </body>
 </html>
