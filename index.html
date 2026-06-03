@@ -511,36 +511,12 @@
             renderUI();
         }
 
-        async function downloadAudio(url, filename, buttonElement) {
-            if (buttonElement) {
-                buttonElement.style.pointerEvents = 'none';
-                buttonElement.style.opacity = '0.3';
-            }
-            showToast('جاري بدء التحميل... يرجى الانتظار');
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('فشل جلب الملف');
-                const blob = await response.blob();
-                const blobUrl = window.URL.createObjectURL(blob);
-                const tempLink = document.createElement('a');
-                tempLink.style.display = 'none';
-                tempLink.href = blobUrl;
-                tempLink.download = filename;
-                document.body.appendChild(tempLink);
-                tempLink.click();
-                window.URL.revokeObjectURL(blobUrl);
-                document.body.removeChild(tempLink);
-                showToast('اكتمل تحميل السورة بنجاح!', 3000, true);
-            } catch (error) {
-                console.error(error);
-                showToast('جاري فتح الملف في نافذة جديدة للتنزيل...', 4000);
-                window.open(url, '_blank');
-            } finally {
-                if (buttonElement) {
-                    buttonElement.style.pointerEvents = 'auto';
-                    buttonElement.style.opacity = '1';
-                }
-            }
+        // تحسين دالة التحميل لعرض التنبيه اللحظي بوسط الشاشة فوراً بدلاً من الأعلى
+        function downloadAudio(url, filename, buttonElement) {
+            // فتح الرابط أولاً وبشكل متزامن لمنع متصفحات الجوال من حجب النافذة المنبثقة
+            window.open(url, '_blank');
+            // التنبيه اللحظي في وسط الشاشة مباشرة
+            alert('جاري فتح السورة في نافذة جديدة.\n\nلتحميل الملف: اضغط على زر الخيارات (الثلاث نقاط) في المشغل الجديد ثم اختر "تنزيل".');
         }
 
         function showToast(message, duration = 3000, isSuccess = false) {
@@ -557,6 +533,7 @@
             setTimeout(() => { toast.classList.remove('active'); }, duration);
         }
 
+        // تحسين آلية التشغيل والانتقال لمنع تأخر استجابة المتصفح وتحرير الموارد فوراً
         function selectAndPlay(id) {
             const selectedSurah = surahs.find(s => s.id === id);
             if (!selectedSurah) return;
@@ -566,10 +543,14 @@
                 return;
             }
 
+            // إيقاف التشغيل السابق تماماً ومسح رابطه لتحرير الذاكرة وتفادي أي تعليق
+            audioInstance.pause();
+            audioInstance.removeAttribute('src');
+            audioInstance.load(); 
+
             playingSurahId = id;
-            audioInstance.src = selectedSurah.url;
-            audioInstance.load();
             
+            // تفعيل واجهة التشغيل بالمسار الجديد فوراً دون انتظار استجابة السيرفر
             document.getElementById('global-player').classList.add('active');
             document.getElementById('player-track-title').innerText = `سورة ${selectedSurah.name}`;
             
@@ -578,10 +559,20 @@
                 downloadAudio(selectedSurah.url, `سورة ${selectedSurah.name} - المنشاوي.mp3`, playerDownloadBtn);
             };
 
-            const playPromise = audioInstance.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => { updatePlayerUI(true); }).catch(err => { console.log("خطأ بالتشغيل:", err); });
-            }
+            // استخدام تأخير متناهي الصغر (50 ملي ثانية) لتنظيم طابور العمليات البرمجية بالسماح للمتصفح بالانتهاء من مسح المقطع القديم قبل المباشرة بطلب وتحميل المقطع الجديد، مما يجعل الانتقال فورياً وسلساً دون أدنى تأخير
+            setTimeout(() => {
+                audioInstance.src = selectedSurah.url;
+                audioInstance.preload = 'auto'; // تشجيع المتصفح على التحميل المسبق الذكي لسرعة الاستجابة
+                
+                const playPromise = audioInstance.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => { 
+                        updatePlayerUI(true); 
+                    }).catch(err => { 
+                        console.log("خطأ بالتشغيل:", err); 
+                    });
+                }
+            }, 50);
         }
 
         // إيقاف مؤقت / تشغيل
