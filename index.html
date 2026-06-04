@@ -591,21 +591,35 @@
             fetchUserDownloadCounts();
         }
 
-        // دالة جلب عدد مرات تحميل السور وعرضها للجميع برقم مجرد تحت الأيقونة
+        // دالة جلب عدد مرات تحميل السور وعرضها للجميع برقم مجرد تحت الأيقونة مع معالجة وحماية الكاش السحابي
         async function fetchUserDownloadCounts() {
+            // جلب النسخة الاحتياطية المحلية للعدادات لتجنب الانتظار أو التصفير المؤقت
+            let localCounts = JSON.parse(localStorage.getItem('premium_quran_download_counts')) || {};
+
             surahs.forEach(async (surah) => {
                 const textLabel = document.getElementById(`dl-text-${surah.id}`);
                 if (!textLabel) return;
+
+                // عرض القيمة المحفوظة محلياً فوراً (إن وجدت) لسرعة الاستجابة ومنع تصفير الرقم عند الريفريش
+                const savedCount = localCounts[`surah_${surah.id}`] || 0;
+                textLabel.innerText = savedCount;
+
                 try {
-                    const response = await fetch(`https://api.counterapi.dev/v1/menshawy_lost_archive_v1/surah_${surah.id}`);
+                    // جلب أحدث قيمة حقيقية من الخادم السحابي مع تجاوز الكاش
+                    const response = await fetch(`https://api.counterapi.dev/v1/menshawy_lost_archive_v1/surah_${surah.id}?t=${Date.now()}`);
                     if (response.ok) {
                         const data = await response.json();
-                        textLabel.innerText = data.count || 0; // عرض الرقم المجرد فقط بشكل منسق وجميل
-                    } else {
-                        textLabel.innerText = '0'; // تعيين 0 افتراضياً إذا لم تكن مسجلة مسبقاً
+                        const serverCount = data.count || 0;
+
+                        // تحديث البيانات وعرضها فقط إذا كانت القيمة القادمة من السيرفر أكبر (لتجنب ارتداد الكاش)
+                        if (serverCount > savedCount) {
+                            textLabel.innerText = serverCount;
+                            localCounts[`surah_${surah.id}`] = serverCount;
+                            localStorage.setItem('premium_quran_download_counts', JSON.stringify(localCounts));
+                        }
                     }
                 } catch (e) {
-                    textLabel.innerText = '-';
+                    console.warn('تعذر الاتصال بخادم العداد السحابي، تم الاعتماد على الذاكرة المحلية:', e);
                 }
             });
         }
@@ -641,15 +655,22 @@
 
             // تحديث وإرسال إشارة العداد التراكمي داخلياً في الخلفية بشكل صامت دون تعليق واجهة المستخدم
             if (surahId) {
+                // 1. تحديث العداد محلياً فوراً في التخزين المؤقت لضمان عدم اختفائه عند التحديث بسبب كاش السيرفر
+                let localCounts = JSON.parse(localStorage.getItem('premium_quran_download_counts')) || {};
+                const currentVal = parseInt(localCounts[`surah_${surahId}`]) || 0;
+                const newVal = currentVal + 1;
+                
+                localCounts[`surah_${surahId}`] = newVal;
+                localStorage.setItem('premium_quran_download_counts', JSON.stringify(localCounts));
+
+                // تحديث العداد المعروض أمام الزائر على الشاشة تلقائياً فوراً كأرقام فقط
+                const textLabel = document.getElementById(`dl-text-${surahId}`);
+                if (textLabel) {
+                    textLabel.innerText = newVal;
+                }
+
+                // 2. إرسال الإشارة للخادم لمزامنتها مع بقية مستخدمي وزوار الموقع عالمياً
                 fetch(`https://api.counterapi.dev/v1/menshawy_lost_archive_v1/surah_${surahId}/up`)
-                    .then(() => {
-                        // تحديث الرقم المعروض أمام الزائر تلقائياً فوراً كأرقام فقط
-                        const textLabel = document.getElementById(`dl-text-${surahId}`);
-                        if (textLabel) {
-                            const currentVal = parseInt(textLabel.innerText) || 0;
-                            textLabel.innerText = currentVal + 1;
-                        }
-                    })
                     .catch(err => console.log('خطأ في إرسال العداد التراكمي للتحميلات:', err));
             }
 
