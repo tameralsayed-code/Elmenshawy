@@ -597,12 +597,45 @@
             renderUI();
         }
 
-        // تحسين دالة التحميل لعرض التنبيه اللحظي بوسط الشاشة فوراً بدلاً من الأعلى
-        function downloadAudio(url, filename, buttonElement) {
-            // فتح الرابط أولاً وبشكل متزامن لمنع متصفحات الجوال من حجب النافذة المنبثقة
-            window.open(url, '_blank');
-            // التنبيه اللحظي في وسط الشاشة مباشرة
-            alert('جاري فتح السورة في نافذة جديدة.\n\nلتحميل الملف: اضغط على زر الخيارات (الثلاث نقاط) في المشغل الجديد ثم اختر "تنزيل".');
+        // تطوير دالة التحميل المباشر الذكية الهجينة لدعم التنزيل المباشر (مثل روابط Catbox)
+        // مع توفير تحويل احتياطي فوري إذا كان الخادم يفرض قيوداً مثل CORS
+        async function downloadAudio(url, filename, buttonElement) {
+            if (buttonElement) {
+                buttonElement.style.pointerEvents = 'none';
+                buttonElement.style.opacity = '0.4';
+            }
+            showToast('جاري تحضير ملف الصوت للتحميل المباشر...');
+
+            try {
+                // محاولة الجلب البرمجي الفعلي (تنجح تماماً لروابط Catbox والمستودعات الداعمة)
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('CORS or Network restrict');
+                
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                const tempLink = document.createElement('a');
+                tempLink.href = blobUrl;
+                tempLink.download = filename;
+                document.body.appendChild(tempLink);
+                tempLink.click();
+                
+                // تنظيف الملفات المؤقتة
+                document.body.removeChild(tempLink);
+                window.URL.revokeObjectURL(blobUrl);
+                showToast('اكتمل تحميل الملف الصوتي بنجاح!', 3000, true);
+                
+            } catch (error) {
+                console.warn('تم التحويل الاحتياطي للتحميل المباشر بسبب قيود الخادم:', error);
+                // الحل الاحتياطي السريع في حال فشل الجلب البرمجي
+                window.open(url, '_blank');
+                alert('جاري جلب السورة في نافذة تحميل مستقلة.\n\nتنبيه: اضغط على خيارات المشغل الجديد (الثلاث نقاط) ثم اختر "تنزيل" لحفظ الملف على جهازك.');
+            } finally {
+                if (buttonElement) {
+                    buttonElement.style.pointerEvents = 'auto';
+                    buttonElement.style.opacity = '1';
+                }
+            }
         }
 
         function showToast(message, duration = 3000, isSuccess = false) {
@@ -713,7 +746,7 @@
             renderUI();
         }
 
-        // ربط وتحديث شريط التقدم مع تفادي التحديث التلقائي أثناء قيام المستخدم بالسحب الفعلي أو أثناء عملية البحث الزمني (Seeking)
+        // ربط وتحديث شريط التقدم الفني مع تفادي التحديث التلقائي أثناء قيام المستخدم بالسحب الفعلي أو أثناء عملية البحث الزمني (Seeking)
         audioInstance.ontimeupdate = () => {
             if (isNaN(audioInstance.duration) || isDraggingProgress || isSeeking) return;
             const progress = (audioInstance.currentTime / audioInstance.duration) * 100;
