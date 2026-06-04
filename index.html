@@ -593,8 +593,13 @@
 
         // دالة جلب عدد مرات تحميل السور وعرضها للجميع برقم مجرد تحت الأيقونة مع معالجة وحماية الكاش السحابي
         async function fetchUserDownloadCounts() {
-            // جلب النسخة الاحتياطية المحلية للعدادات لتجنب الانتظار أو التصفير المؤقت
-            let localCounts = JSON.parse(localStorage.getItem('premium_quran_download_counts')) || {};
+            // جلب النسخة الاحتياطية المحلية للعدادات لتجنب الانتظار أو التصفير المؤقت مع الحماية الكاملة ضد أخطاء القراءة البدئية
+            let localCounts = {};
+            try {
+                localCounts = JSON.parse(localStorage.getItem('premium_quran_download_counts')) || {};
+            } catch (e) {
+                console.warn('تعذر قراءة سجل الذاكرة المحلية:', e);
+            }
 
             surahs.forEach(async (surah) => {
                 const textLabel = document.getElementById(`dl-text-${surah.id}`);
@@ -605,8 +610,11 @@
                 textLabel.innerText = savedCount;
 
                 try {
-                    // جلب أحدث قيمة حقيقية من الخادم السحابي مع تجاوز الكاش
-                    const response = await fetch(`https://api.counterapi.dev/v1/menshawy_lost_archive_v1/surah_${surah.id}?t=${Date.now()}`);
+                    // جلب أحدث قيمة حقيقية من الخادم السحابي مع توجيه استدعاء نظيف (بدون تكرار المعاملات لحماية الخادم من الأخطاء)
+                    const response = await fetch(`https://api.counterapi.dev/v1/menshawy_lost_archive_v1/surah_${surah.id}`, {
+                        cache: 'no-store' // تجاوز الكاش المدمج بالمتصفح برمجياً ونظيفاً
+                    });
+                    
                     if (response.ok) {
                         const data = await response.json();
                         const serverCount = data.count || 0;
@@ -656,7 +664,12 @@
             // تحديث وإرسال إشارة العداد التراكمي داخلياً في الخلفية بشكل صامت دون تعليق واجهة المستخدم
             if (surahId) {
                 // 1. تحديث العداد محلياً فوراً في التخزين المؤقت لضمان عدم اختفائه عند التحديث بسبب كاش السيرفر
-                let localCounts = JSON.parse(localStorage.getItem('premium_quran_download_counts')) || {};
+                let localCounts = {};
+                try {
+                    localCounts = JSON.parse(localStorage.getItem('premium_quran_download_counts')) || {};
+                } catch (e) {
+                    console.warn(e);
+                }
                 const currentVal = parseInt(localCounts[`surah_${surahId}`]) || 0;
                 const newVal = currentVal + 1;
                 
