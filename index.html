@@ -498,6 +498,7 @@
         // متغيرات لمراقبة عملية سحب ومزامنة شريط التشغيل
         let isDraggingProgress = false;
         let isSeeking = false; // لمنع أي ارتدادات برمجية أثناء طلب الملف الصوتي
+        let toastTimeout; // متغير للتحكم في بقاء الإشعارات
 
         // ربط أحداث القفز الزمني الفعلي لمنع أي قفزات ارتدادية
         audioInstance.onseeking = () => { isSeeking = true; };
@@ -597,39 +598,71 @@
             renderUI();
         }
 
-        // تطوير دالة التحميل المباشر الذكية الهجينة لدعم التنزيل المباشر (مثل روابط Catbox)
-        // مع توفير تحويل احتياطي فوري إذا كان الخادم يفرض قيوداً مثل CORS
+        // دالة التحميل المباشر والاحترافية: تدعم التنزيل الفوري مع عداد النسبة المئوية المباشر
+        // وتتجنب تماماً التوجيه لصفحات المشغلات الافتراضية
         async function downloadAudio(url, filename, buttonElement) {
             if (buttonElement) {
                 buttonElement.style.pointerEvents = 'none';
                 buttonElement.style.opacity = '0.4';
             }
-            showToast('جاري تحضير ملف الصوت للتحميل المباشر...');
+            
+            // تفعيل الإشعار والبدء المباشر للتحميل
+            showToast('جاري الاتصال بالخادم وتجهيز التحميل...', 0);
 
             try {
-                // محاولة الجلب البرمجي الفعلي (تنجح تماماً لروابط Catbox والمستودعات الداعمة)
+                // جلب دفق البيانات (Stream Fetching)
                 const response = await fetch(url);
-                if (!response.ok) throw new Error('CORS or Network restrict');
+                if (!response.ok) throw new Error('فشل جلب الملف من الخادم');
+
+                const contentLength = response.headers.get('content-length');
+                const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
                 
-                const blob = await response.blob();
+                const reader = response.body.getReader();
+                let receivedBytes = 0;
+                let chunks = [];
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    chunks.push(value);
+                    receivedBytes += value.length;
+                    
+                    if (totalBytes > 0) {
+                        const percent = Math.round((receivedBytes / totalBytes) * 100);
+                        showToast(`جاري التحميل المباشر: ${percent}% ... يرجى الانتظار`, 0);
+                    } else {
+                        const receivedMB = (receivedBytes / (1024 * 1024)).toFixed(1);
+                        showToast(`جاري تحميل السورة: ${receivedMB} MB ... يرجى الانتظار`, 0);
+                    }
+                }
+
+                // دمج الأجزاء المستلمة لملف كامل
+                const blob = new Blob(chunks, { type: 'audio/mpeg' });
                 const blobUrl = window.URL.createObjectURL(blob);
                 
+                // بدء تشغيل التحميل التلقائي الفوري دون مغادرة الصفحة
                 const tempLink = document.createElement('a');
                 tempLink.href = blobUrl;
                 tempLink.download = filename;
                 document.body.appendChild(tempLink);
                 tempLink.click();
                 
-                // تنظيف الملفات المؤقتة
+                // تنظيف الملفات المؤقتة من المتصفح
                 document.body.removeChild(tempLink);
                 window.URL.revokeObjectURL(blobUrl);
-                showToast('اكتمل تحميل الملف الصوتي بنجاح!', 3000, true);
+                
+                showToast('اكتمل تنزيل الملف بنجاح! 🎉', 3000, true);
                 
             } catch (error) {
-                console.warn('تم التحويل الاحتياطي للتحميل المباشر بسبب قيود الخادم:', error);
+                console.warn('تم استخدام التحويل الاحتياطي بسبب قيود النطاق الخارجي CORS:', error);
                 // الحل الاحتياطي السريع في حال فشل الجلب البرمجي
                 window.open(url, '_blank');
-                alert('جاري جلب السورة في نافذة تحميل مستقلة.\n\nتنبيه: اضغط على خيارات المشغل الجديد (الثلاث نقاط) ثم اختر "تنزيل" لحفظ الملف على جهازك.');
+                alert('تم الانتقال لصفحة المشغل نظراً لقيود حماية الخادم الخارجية.\n\nتنبيه: اضغط على خيارات المشغل الجديد (الثلاث نقاط) ثم اختر "تنزيل" لحفظ الملف على جهازك.');
+                
+                // إخفاء إشعار التحميل
+                let toast = document.getElementById('app-toast');
+                if (toast) toast.classList.remove('active');
             } finally {
                 if (buttonElement) {
                     buttonElement.style.pointerEvents = 'auto';
@@ -646,10 +679,17 @@
                 toast.className = 'toast-notification';
                 document.body.appendChild(toast);
             }
+            
+            // إلغاء أي وقت مؤجل للإخفاء لمنع تعارض الإشعارات المتتابعة أثناء التحميل
+            clearTimeout(toastTimeout);
+            
             toast.style.borderColor = isSuccess ? 'var(--success)' : 'rgba(212, 175, 55, 0.25)';
             toast.innerText = message;
             toast.classList.add('active');
-            setTimeout(() => { toast.classList.remove('active'); }, duration);
+            
+            if (duration > 0) {
+                toastTimeout = setTimeout(() => { toast.classList.remove('active'); }, duration);
+            }
         }
 
         // تحسين آلية التشغيل والانتقال لمنع تأخر استجابة المتصفح وتحرير الموارد فوراً
@@ -842,7 +882,6 @@
                 .replace(/[ًٌٍَُِِّْ]/g, '') 
                 .replace(/[أإآا]/g, 'ا')    
                 .replace(/ة/g, 'ه')         
-                .replace(/ى/g, 'ي')         
                 .trim();
         }
 
