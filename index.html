@@ -54,7 +54,7 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            padding-bottom: 110px; /* مسافة متناسقة للمشغل العائم */
+            padding-bottom: 130px; /* زيادة بسيطة للهامش لتناسب أبعاد المشغل الجديد */
             
             /* منع تحديد أو تظليل أو تعليم النصوص تماماً عند الضغط للنسخ */
             user-select: none;
@@ -260,10 +260,10 @@
             position: fixed;
             bottom: 20px;
             left: 50%;
-            transform: translateX(-50%) translateY(140px);
+            transform: translateX(-50%) translateY(160px);
             width: calc(100% - 32px);
             max-width: 628px;
-            background: rgba(3, 20, 16, 0.94);
+            background: rgba(3, 20, 16, 0.95);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(212, 175, 55, 0.12);
@@ -271,10 +271,10 @@
             box-shadow: 0 12px 35px rgba(0,0,0,0.4);
             z-index: 999;
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            padding: 8px 16px 12px 16px;
+            padding: 8px 16px 8px 16px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
         }
 
         .floating-player.active { transform: translateX(-50%) translateY(0); }
@@ -406,6 +406,95 @@
         .player-btn svg { width: 14px; height: 14px; }
         .player-btn.play-toggle-btn svg { width: 15px; height: 15px; }
 
+        /* سطر التحكم الإضافي الأنيق (مؤقت النوم + تكرار السور) */
+        .player-sub-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 6px;
+        }
+
+        .sub-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-family: inherit;
+            font-size: 0.72rem;
+        }
+
+        .sub-btn:hover {
+            color: var(--accent-gold);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .sub-btn svg {
+            width: 12px;
+            height: 12px;
+            opacity: 0.8;
+            stroke: currentColor;
+        }
+
+        .sub-btn.active {
+            color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .sleep-timer-container {
+            position: relative;
+        }
+
+        /* قائمة مؤقت النوم المنبثقة للأعلى */
+        .sleep-timer-menu {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            background: rgba(3, 20, 16, 0.98);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            padding: 4px 0;
+            display: none;
+            flex-direction: column;
+            min-width: 110px;
+            z-index: 1000;
+        }
+
+        .sleep-timer-menu.show {
+            display: flex;
+        }
+
+        .sleep-menu-item {
+            padding: 6px 12px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            text-align: right;
+            font-size: 0.72rem;
+        }
+
+        .sleep-menu-item:hover {
+            background: rgba(212, 175, 55, 0.06);
+            color: var(--accent-gold);
+        }
+
+        .sleep-menu-item.active {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
         .toast-notification {
             position: fixed; top: 15px; left: 50%; transform: translateX(-50%) translateY(-100px);
             background: rgba(2, 13, 10, 0.96); border: 1px solid rgba(212, 175, 55, 0.2);
@@ -488,6 +577,32 @@
                 </button>
             </div>
         </div>
+
+        <!-- السطر المساعد الجديد لإدارة مؤقت النوم وأوضاع التشغيل -->
+        <div class="player-sub-row">
+            <!-- وضع التشغيل وتكرار السورة -->
+            <div class="play-mode-container">
+                <button class="sub-btn" id="repeat-mode-btn" onclick="cyclePlayMode()" title="وضع التشغيل">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    <span id="play-mode-label">التشغيل التالي تلقائياً</span>
+                </button>
+            </div>
+
+            <!-- مؤقت النوم الاحترافي -->
+            <div class="sleep-timer-container">
+                <button class="sub-btn" id="sleep-timer-btn" onclick="toggleSleepTimerMenu(event)" title="مؤقت النوم">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span id="sleep-timer-label">مؤقت النوم</span>
+                </button>
+                <div class="sleep-timer-menu" id="sleep-timer-menu">
+                    <div class="sleep-menu-item active" onclick="setSleepTimer(0)">إيقاف المؤقت</div>
+                    <div class="sleep-menu-item" onclick="setSleepTimer(15)">15 دقيقة</div>
+                    <div class="sleep-menu-item" onclick="setSleepTimer(30)">30 دقيقة</div>
+                    <div class="sleep-menu-item" onclick="setSleepTimer(45)">45 دقيقة</div>
+                    <div class="sleep-menu-item" onclick="setSleepTimer(60)">60 دقيقة</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -496,6 +611,19 @@
             pause: `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="3" height="16"></rect><rect x="15" y="4" width="3" height="16"></rect></svg>`,
             download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`,
             star: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`
+        };
+
+        // إدارة أيقونات وضع التشغيل المخصص
+        const modeIcons = {
+            all: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>`,
+            one: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/><text x="10" y="14" font-size="8" font-weight="bold" fill="currentColor" stroke="none">1</text></svg>`,
+            stop: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect></svg>`
+        };
+
+        const modeLabels = {
+            all: 'التشغيل التالي تلقائياً',
+            one: 'تكرار السورة الحالية',
+            stop: 'إيقاف بعد انتهاء السورة'
         };
 
         let surahs = [];
@@ -511,9 +639,27 @@
         let isSeeking = false; // لمنع أي ارتدادات برمجية أثناء طلب الملف الصوتي
         let toastTimeout; // متغير للتحكم في بقاء الإشعارات
 
+        // متغيرات إضافية لوضع التشغيل ومؤقت النوم
+        let playMode = 'all'; // الأوضاع: 'all' (التالي تلقائياً), 'one' (تكرار السورة), 'stop' (إيقاف)
+        let sleepTimerId = null;
+        let sleepTimerRemaining = 0;
+        let sleepTimerIntervalId = null;
+
         // ربط أحداث القفز الزمني الفعلي لمنع أي قفزات ارتدادية
         audioInstance.onseeking = () => { isSeeking = true; };
         audioInstance.onseeked = () => { isSeeking = false; };
+
+        // تحديث حالة التشغيل المباشر لنظام الوسائط في الخلفية
+        audioInstance.onplay = () => {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = "playing";
+            }
+        };
+        audioInstance.onpause = () => {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = "paused";
+            }
+        };
 
         // جلب البيانات ديناميكياً من ملف JSON
         async function fetchSurahData() {
@@ -736,6 +882,9 @@
 
             // إسناد رابط السورة الجديد مباشرة (المتصفح يتولى تحميل وتدفق الملف تلقائياً في الخلفية)
             audioInstance.src = selectedSurah.url;
+
+            // تحديث مركز وسائط الهاتف والسيارة لعرض معلومات السورة الجارية
+            updateMediaSession(selectedSurah);
             
             const playPromise = audioInstance.play();
             if (playPromise !== undefined) {
@@ -769,6 +918,17 @@
                 selectAndPlay(surahs[currentIndex + 1].id);
             } else {
                 selectAndPlay(surahs[0].id);
+            }
+        }
+
+        // تشغيل السورة السابقة (مفيد لدعم أزرار بلوتوث السيارة والهاتف)
+        function playPrevious() {
+            if (!playingSurahId || surahs.length === 0) return;
+            const currentIndex = surahs.findIndex(s => s.id === playingSurahId);
+            if (currentIndex !== -1 && currentIndex > 0) {
+                selectAndPlay(surahs[currentIndex - 1].id);
+            } else {
+                selectAndPlay(surahs[surahs.length - 1].id); // العودة لآخر سورة
             }
         }
 
@@ -816,10 +976,140 @@
             document.getElementById('player-duration-time').innerText = formatTime(audioInstance.duration);
         };
 
-        // الانتقال التلقائي للسورة التالية فور انتهاء السورة الجارية
+        // الانتقال التلقائي حسب وضع التشغيل المحدد (تكرار، توالي، إيقاف)
         audioInstance.onended = () => {
-            playNext();
+            if (playMode === 'all') {
+                playNext();
+            } else if (playMode === 'one') {
+                audioInstance.currentTime = 0;
+                audioInstance.play().then(() => updatePlayerUI(true)).catch(err => console.warn(err));
+            } else if (playMode === 'stop') {
+                updatePlayerUI(false);
+            }
         };
+
+        // التنقل الدائري والذكي بين أوضاع التشغيل الثلاثة
+        function cyclePlayMode() {
+            if (playMode === 'all') {
+                playMode = 'one';
+            } else if (playMode === 'one') {
+                playMode = 'stop';
+            } else {
+                playMode = 'all';
+            }
+            
+            const btn = document.getElementById('repeat-mode-btn');
+            btn.innerHTML = `${modeIcons[playMode]} <span id="play-mode-label">${modeLabels[playMode]}</span>`;
+            
+            if (playMode !== 'all') {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+            
+            showToast(`وضع التشغيل: ${modeLabels[playMode]}`, 2000);
+        }
+
+        // فتح وإغلاق قائمة مؤقت النوم المنبثقة
+        function toggleSleepTimerMenu(event) {
+            if (event) event.stopPropagation();
+            const menu = document.getElementById('sleep-timer-menu');
+            menu.classList.toggle('show');
+        }
+
+        // إغلاق القائمة فور الضغط خارج نطاق زر مؤقت النوم
+        window.addEventListener('click', (e) => {
+            const container = document.querySelector('.sleep-timer-container');
+            const menu = document.getElementById('sleep-timer-menu');
+            if (container && !container.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        });
+
+        // ضبط وتفعيل مؤقت النوم وبدء العد التنازلي التفاعلي
+        function setSleepTimer(minutes) {
+            if (sleepTimerId) clearTimeout(sleepTimerId);
+            if (sleepTimerIntervalId) clearInterval(sleepTimerIntervalId);
+            
+            const btn = document.getElementById('sleep-timer-btn');
+            const label = document.getElementById('sleep-timer-label');
+            
+            // تنظيف التفعيل السابق في عناصر القائمة
+            document.querySelectorAll('.sleep-menu-item').forEach(el => el.classList.remove('active'));
+
+            if (minutes === 0) {
+                sleepTimerRemaining = 0;
+                label.innerText = 'مؤقت النوم';
+                btn.classList.remove('active');
+                document.querySelectorAll('.sleep-menu-item')[0].classList.add('active');
+                document.getElementById('sleep-timer-menu').classList.remove('show');
+                return;
+            }
+
+            // إعطاء مظهر النشاط للعنصر المختار
+            const itemIdx = [15, 30, 45, 60].indexOf(minutes) + 1;
+            const items = document.querySelectorAll('.sleep-menu-item');
+            if (items[itemIdx]) items[itemIdx].classList.add('active');
+
+            sleepTimerRemaining = minutes * 60;
+            btn.classList.add('active');
+            document.getElementById('sleep-timer-menu').classList.remove('show');
+
+            updateSleepTimerUI();
+
+            // تحديث العداد التنازلي كل ثانية
+            sleepTimerIntervalId = setInterval(() => {
+                sleepTimerRemaining--;
+                if (sleepTimerRemaining <= 0) {
+                    clearInterval(sleepTimerIntervalId);
+                    clearTimeout(sleepTimerId);
+                    // إيقاف تشغيل المشغل
+                    audioInstance.pause();
+                    updatePlayerUI(false);
+                    // إعادة تعيين واجهة زر مؤقت النوم
+                    label.innerText = 'مؤقت النوم';
+                    btn.classList.remove('active');
+                    showToast('تم إيقاف التشغيل بواسطة مؤقت النوم 💤', 3000, true);
+                } else {
+                    updateSleepTimerUI();
+                }
+            }, 1000);
+        }
+
+        function updateSleepTimerUI() {
+            const label = document.getElementById('sleep-timer-label');
+            const mins = Math.floor(sleepTimerRemaining / 60);
+            const secs = sleepTimerRemaining % 60;
+            label.innerText = `مؤقت النوم (${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')})`;
+        }
+
+        // تكامل وعرض معلومات السورة والتحكم من شاشات قفل الهاتف وبلوتوث السيارات
+        function updateMediaSession(surah) {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: `سورة ${surah.name}`,
+                    artist: 'الشيخ محمد صديق المنشاوي',
+                    album: 'الختمة المرتلة الثانية (الختمة المفقودة)',
+                    artwork: [
+                        { src: 'https://f.top4top.io/p_38068cvpd0.jpg', sizes: '512x512', type: 'image/jpeg' }
+                    ]
+                });
+
+                // تعيين وتفعيل وظائف الأزرار الخارجية
+                navigator.mediaSession.setActionHandler('play', () => {
+                    togglePlayPause();
+                });
+                navigator.mediaSession.setActionHandler('pause', () => {
+                    togglePlayPause();
+                });
+                navigator.mediaSession.setActionHandler('previoustrack', () => {
+                    playPrevious();
+                });
+                navigator.mediaSession.setActionHandler('nexttrack', () => {
+                    playNext();
+                });
+            }
+        }
 
         // تطوير معالج السحب والتقديم المتزامن والاحترافي لشريط التشغيل لمنع أي ارتداد زمني
         function initProgressDrag() {
