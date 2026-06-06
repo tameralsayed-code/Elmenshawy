@@ -620,8 +620,17 @@
             // تفعيل الإشعار والبدء المباشر للتحميل
             showToast('جاري الاتصال بالخادم وتجهيز التحميل...', 0);
 
+            // إرسال حدث التحميل يدوياً إلى Google Analytics لضمان احتسابه بدقة
+            if (typeof gtag === 'function') {
+                gtag('event', 'file_download', {
+                    'file_name': filename,
+                    'file_extension': 'mp3',
+                    'link_url': url
+                });
+            }
+
             try {
-                // جلب دفق البيانات (Stream Fetching)
+                // جلب دفق البيانات (Stream Fetch)
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('فشل جلب الملف من الخادم');
 
@@ -703,7 +712,7 @@
             }
         }
 
-        // تحسين آلية التشغيل والانتقال لمنع تأخر استجابة المتصفح وتحرير الموارد فوراً
+        // تحسين آلية التشغيل والانتقال الفوري لمنع تأخر استجابة المتصفح وحل التعليق
         function selectAndPlay(id) {
             const selectedSurah = surahs.find(s => s.id === id);
             if (!selectedSurah) return;
@@ -713,31 +722,29 @@
                 return;
             }
 
-            // إيقاف التشغيل السابق تماماً ومسح رابطه لتحرير الذاكرة وتفادي أي تعليق
+            // إيقاف التشغيل الحالي فوراً لمنع تداخل الأصوات والتعليق البرمجي
             audioInstance.pause();
-            audioInstance.removeAttribute('src');
-            audioInstance.load(); 
 
             playingSurahId = id;
             
-            // تفعيل واجهة التشغيل بالمسار الجديد فوراً دون انتظار استجابة السيرفر
+            // تفعيل المشغل وتصفير المؤشرات البصرية فوراً لاستجابة لحظية ملموسة
             document.getElementById('global-player').classList.add('active');
             document.getElementById('player-track-title').innerText = `سورة ${selectedSurah.name}`;
+            document.getElementById('progress-bar-fill').style.width = '0%';
+            document.getElementById('player-current-time').innerText = '00:00';
+            document.getElementById('player-duration-time').innerText = '00:00';
 
-            // استخدام تأخير متناهي الصغر (50 ملي ثانية) لتنظيم طابور العمليات البرمجية بالسماح للمتصفح بالانتهاء من مسح المقطع القديم قبل المباشرة بطلب وتحميل المقطع الجديد، مما يجعل الانتقال فورياً وسلساً دون أدنى تأخير
-            setTimeout(() => {
-                audioInstance.src = selectedSurah.url;
-                audioInstance.preload = 'auto'; // تشجيع المتصفح على التحميل المسبق الذكي لسرعة الاستجابة
-                
-                const playPromise = audioInstance.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => { 
-                        updatePlayerUI(true); 
-                    }).catch(err => { 
-                        console.log("خطأ بالتشغيل:", err); 
-                    });
-                }
-            }, 50);
+            // إسناد رابط السورة الجديد مباشرة (المتصفح يتولى تحميل وتدفق الملف تلقائياً في الخلفية)
+            audioInstance.src = selectedSurah.url;
+            
+            const playPromise = audioInstance.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => { 
+                    updatePlayerUI(true); 
+                }).catch(err => { 
+                    console.warn("تنبيه: تم إلغاء طلب التشغيل بسبب التنقل السريع، أو لم يكتمل تحميل الملف:", err); 
+                });
+            }
         }
 
         // إيقاف مؤقت / تشغيل
